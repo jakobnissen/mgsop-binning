@@ -1,0 +1,15 @@
+cores: 28
+
+platform: Illumina
+
+assemble_contigs: True
+
+min_contig_length: 1500
+remove_duplicates: True
+
+samtools_path: /services/tools/samtools/1.6/bin/samtools
+bwa_path: /services/tools/bwa/0.7.15/bwa
+jgi_path: /services/tools/metabat/2.10.2/jgi_summarize_bam_contig_depths
+metabat_path: /services/tools/metabat/2.10.2/metabat2
+
+

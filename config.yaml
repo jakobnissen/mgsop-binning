@@ -1,3 +1,6 @@
+chain_modules: False
+assembly_workdir: /path/to/workdir
+
 cores: 28
 
 platform: Illumina
@@ -11,5 +14,3 @@ samtools_path: /services/tools/samtools/1.6/bin/samtools
 bwa_path: /services/tools/bwa/0.7.15/bwa
 jgi_path: /services/tools/metabat/2.10.2/jgi_summarize_bam_contig_depths
 metabat_path: /services/tools/metabat/2.10.2/metabat2
-
-

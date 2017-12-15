@@ -4,6 +4,12 @@ include: 'scripts/parseconfig.snakefile'
 
 workdir: config['binning_workdir']
 
+if config['chain_modules']:
+    subworkflow assembly:
+        snakefile: '../assembly/Snakefile'
+        workdir: config['assembly_workdir']
+        configfile: config['configfile']    
+
 # Help with avoiding missing file errors if there's latency on network.
 shell.prefix('sleep 10; ')
 
@@ -24,11 +30,17 @@ rule all:
         # Metabat create depths file
         #'metabat/depths.txt'
         # Metabat create bins
-        dynamic('metabat/bins/bin.{binid}.fna')
+        'metabat/done'
+
+def contigs_input(wildcards):
+    if config['chain_modules']:
+        return assembly(expand('assembly/{sample}.fna', sample=config['samples']))
+    else:
+        return expand(os.path.join(config['assembly_workdir'], 'assembly/{sample}.fna'), sample=config['samples'])
         
 # Concats contigs
 rule concat_contigs:
-    input: expand(os.path.join(config['assembly_workdir'], 'assembly/{sample}.fna', sample=config['samples']))
+    input: contigs_input
     output:
         onehalf = temp('contigs/onehalf.fna'),
         otherhalf = temp('contigs/otherhalf.fna')
@@ -46,14 +58,14 @@ rule contigassembler:
         walltime = 864000,
         ppn = CORES,
         mem = '95gb',
-        contigassembler = srcdir('contigAssembler.pl')
+        contigassembler = srcdir('scripts/contigAssembler.pl')
     shell: '{params.contigassembler} -i {input[0]} -j {input[1]} -o {output} -c {params.ppn}'
 
 def filter_contigs_input(wildcards):
     if ASSEMBLE_CONTIGS:
         return rules.contigassembler.output
     else:
-        return expand(os.path.join(config['assembly_workdir'], 'assembly/{sample}.fna', sample=config['samples']))
+        return contigs_input(wildcards)
 
 # Discard small contigs and rename them to ensure unique names
 rule filter_contigs:
@@ -93,11 +105,20 @@ rule index_contigs:
 
 # This allows map_to_contigs to map either single end or paired end reads.
 def map_input(wildcards):
-    if IS_PE[wildcards.experiment]:
-        return [os.path.join(config['assembly_workdir'], 'trim/{}.fw.fastq.gz'.format(wildcards.experiment)),
-                os.path.join(config['assembly_workdir'], 'trim/{}.rv.fastq.gz'.format(wildcards.experiment))]
+    if config['chain_modules']:
+        if IS_PE[wildcards.experiment]:
+            return [assembly('trim/{}.fw.fastq.gz'.format(wildcards.experiment)),
+                    assembly('trim/{}.rv.fastq.gz'.format(wildcards.experiment))]
+
+        else:
+            return assembly('trim/{}.fastq.gz'.format(wildcards.experiment))
+
     else:
-        return os.path.join(config['assembly_workdir'], 'trim/{}.fastq.gz'.format(wildcards.experiment))
+        if IS_PE[wildcards.experiment]:
+            return [os.path.join(config['assembly_workdir'], 'trim/{}.fw.fastq.gz'.format(wildcards.experiment)),
+                    os.path.join(config['assembly_workdir'], 'trim/{}.rv.fastq.gz'.format(wildcards.experiment))]
+        else:
+            return os.path.join(config['assembly_workdir'], 'trim/{}.fastq.gz'.format(wildcards.experiment))
 
 def readgroupstring(wildcards):
     for smp, experiments in config['samples'].items():
@@ -151,7 +172,7 @@ rule namesort:
         mem = '12gb'
     shell:
         '{config[samtools_path]} sort -n '
-        '-m 10G --threads 4 -T {input}.tmp '
+        '-m 3G -@ {threads} -T {input}.tmp '
         '{input} -o {output} 2> {log}'
 
 rule fixmate:
@@ -181,7 +202,7 @@ rule possort:
         mem = '12gb'
     shell:
         '{config[samtools_path]} sort '
-        '-m 10G --threads 4 -T {input}.tmp '
+        '-m 3G -@ {threads} -T {input}.tmp '
         '{input} -o {output} 2> {log}'
 
 rule markdup:
@@ -204,7 +225,7 @@ rule rmpossorted:
     params:
         walltime = 86400,
         ppn = 1,
-        mem = '100 mb'
+        mem = '1gb'
     shell: 'rm {input.possort} 2> {log}'
 
 rule dupfilter:
@@ -245,7 +266,7 @@ rule rmunmerged:
     params:
         walltime = 86400,
         ppn = 1,
-        mem = '100 mb'
+        mem = '1gb'
     shell: 'rm {input.unmerged} 2> {log}'
 
 def depths_input(wildcards):
@@ -274,7 +295,7 @@ def depths_flags(wildcards):
 rule metabat_create_depths_file:
     input:
         bamfiles = depths_input,
-        flags = depths_flags
+        flag = depths_flags
     output: 'metabat/depths.txt'
     log: 'log/metabat/jgi.log'
     params:
@@ -289,7 +310,9 @@ rule metabat_create_bins:
     input:
         depths = rules.metabat_create_depths_file.output,
         contigs = rules.filter_contigs.output,
-    output: dynamic('metabat/bins/bin.{binid}.fna')
+    output:
+        bins = 'metabat/bins',
+        flag = touch('metabat/done')
     log: 'log/metabat/metabat.log'
     threads: CORES
     params:
@@ -299,7 +322,7 @@ rule metabat_create_bins:
         mem = '95gb'
     shell:
         '{config[metabat_path]} -i {input.contigs} -a {input.depths} -m {params.min_contig_length} '
-        '-o {output} -t {params.ppn}'
+        '-o {output.bins} -t {params.ppn} && touch {output.flag}'
 
 def cleanup(directory):
     # Move the numerous "snakejob" files that Computerome can generate.

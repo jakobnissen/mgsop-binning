@@ -3,6 +3,28 @@ if '--directory' not in sys.argv and '-d' not in sys.argv and 'binning_workdir' 
     print(sys.argv)
     raise KeyError('Binning working directory not specified.')
 
+# Parse key chain_modules
+try:
+    CHAIN_MODULES = bool(config['chain_modules'])
+except KeyError:
+    print('"chain_modules" not specified in config file.')
+    raise
+if CHAIN_MODULES is not True and CHAIN_MODULES is not False:
+    print('Configuration key "chain_modules" must be True or False')
+    raise ValueError('Configuration key "chain_modules" must be True or False')
+config['chain_modules'] = CHAIN_MODULES
+
+# Parse key configfile
+if config['chain_modules']:
+    try:
+        CONFIGFILE = config['configfile']
+    except KeyError:
+        print('"chain_module set to True, but "configfile" not specified in config file.')
+        raise
+    if not os.path.isfile(CONFIGFILE):
+        print('The file pointed to by key "configfile" cannot be found.')
+        raise FileNotFoundError(CONFIGFILE)
+
 # Get information on cores per node
 try:
     CORES = int(config['cores'])

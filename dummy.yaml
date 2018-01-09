@@ -1,0 +1,9 @@
+assembly_workdir: /path/to/output/assembly
+binning_workdir: /path/to/output/binning
+
+# Add configuration here to overwrite the default configurations in config.yaml, e.g:
+# assemble_contigs: false
+
+data:
+    - run1  exp1    sample1 /path/to/data/sample1.forward.fq.gz /path/to/data/sample1.reverse.fq.gz
+    - run2  exp2    sample2 /path/to/data/sample2.forward.fq.gz /path/to/data/sample2.reverse.fq.gz

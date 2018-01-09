@@ -1,5 +1,4 @@
 chain_modules: False
-assembly_workdir: /path/to/workdir
 
 cores: 28
 
@@ -7,7 +6,7 @@ platform: Illumina
 
 assemble_contigs: True
 
-min_contig_length: 1500
+min_contig_length: 2500
 remove_duplicates: True
 
 samtools_path: /services/tools/samtools/1.6/bin/samtools

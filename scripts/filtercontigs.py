@@ -1,7 +1,8 @@
 # Renames contigs to unique names and removes contigs below minimum size.
+import sys
 
-# Assigning this value to local namespace avoids dotted lookup
-min_contig_length = snakemake.params.min_contig_length
+min_contig_length, outputpath, *inputpaths = sys.argv[1:]
+min_contig_length = int(min_contig_length)
 
 def iterfasta(filehandle):
     "A generator which yield header, seq tuples from an open fasta file."
@@ -24,8 +25,11 @@ def iterfasta(filehandle):
             
     yield header, ''.join(buffer)
 
-with open(snakemake.output[0], 'w') as outfile:
-    for filename in snakemake.input:
+print(outputpath, inputpaths)
+sys.exit()
+
+with open(outputpath, 'w') as outfile:
+    for filename in infilepaths:
         samplename = filename.rpartition('/')[2].partition('.')[0]
 
         with open(filename) as infile:

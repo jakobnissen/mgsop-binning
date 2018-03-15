@@ -48,6 +48,10 @@ for line in config['data']:
 
     run, experiment, sample, *paths = fields
 
+    # Check that sample and experiment are legal filenames:
+    if '/' in experiment or '/' in sample:
+        raise ValueError('No experiment or sample name can contain a slash (/)')
+
     # No cross-category non-uniqueness in names
     if run in experiments or run in samples or run in runs:
         raise ValueError('Run {} is not unique in data.'.format(run))
@@ -61,17 +65,23 @@ for line in config['data']:
         if not os.path.isfile(path):
             raise FileNotFoundError(path)
 
-
     # Add them to dictionaries
     if sample in samples:
-        samples[sample].append(experiment)
+        samples[sample].add(experiment)
     else:
-        samples[sample] = [experiment]
+        samples[sample] = {experiment}
     if experiment in experiments:
-        experiments[experiment].append(run)
+        experiments[experiment].add(run)
     else:
-        experiments[experiment] = [run]
+        experiments[experiment] = {run}
     runs[run] = paths
+
+# Convert from sets to list
+for sample in samples:
+    samples[sample] = list(samples[sample])
+
+for experiment in experiments:
+    experiments[experiment] = list(experiments[experiment])
 
 # Not both SE and PE files in same experiment
 for experiment, runlist in experiments.items():

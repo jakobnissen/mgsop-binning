@@ -3,8 +3,8 @@ Created by Jakob Nybo Nissen, Technical University of Denmark, 2018-01-09.
 Based on Simon Rasmussen, TUoD's similar pipeline.
 Please contact jakni@bioinformatics.dtu.dk for bug fixes and feature requests.
 
-MGSOP assembles metagenomic whole genome sequencing data.
 It is part of the mgsop pipeline, along with module `assembly`
+=======
 
 This script bundles together various command line tools semi-intelligently.
 The input is a bunch of FASTQ-files from metagenomic sequencing (assumed to be Illumina, although it probably doesn't matter).
@@ -53,21 +53,22 @@ is in your `PATH`. (On Computerome, you can load the module `anaconda3/4.0.0`)
 1) Create a configuration file in YAML-format with the output directory and data specified with additional optional configuration. Use the `dummy.yaml` file as template. It should look something like 
 this:
 
-    assembly_workdir: /path/to/output/assembly
-    binning_workdir: /path/to/output/binning
+```
+assembly_workdir: /path/to/output/assembly
+binning_workdir: /path/to/output/binning
 
-    data:
-        - run1  exp1    sample1 /path/to/data/sample1.forward.fq.gz /path/to/data/sample1.reverse.fq.gz
-        - run2  exp2    sample2 /path/to/data/sample2.forward.fq.gz /path/to/data/sample2.reverse.fq.gz
-
+data:
+    - run1  exp1    sample1 /path/to/data/sample1.forward.fq.gz /path/to/data/sample1.reverse.fq.gz
+    - run2  exp2    sample2 /path/to/data/sample2.forward.fq.gz /path/to/data/sample2.reverse.fq.gz
+```
 
 2) Run the `bin.py` script WITHOUT the `--commit` flag. Look through all the planned commands. Does it look okay?
 
-    python /path/to/script/bin.py my_config.yaml my_groupname --chain > planned_commands.txt
+    `python /path/to/script/bin.py my_config.yaml my_groupname --chain > planned_commands.txt`
     
 3) If it looks good, run the same command with the `--commit` flag. The pipeline will now execute.
 
-    python /path/to/script/bin.py my_config.yaml my_groupname --chain --commit 2> status.txt
+    `python /path/to/script/bin.py my_config.yaml my_groupname --chain --commit 2> status.txt`
 
 ## Installation
 Download the directory. In the `config.yaml` file, make sure that the number of CPU cores
@@ -82,7 +83,7 @@ Snakemake command.
 This script uses sane defaults, so running without configuration will usually gives decent results.
 However, in some circumstances the results can be improved by passing options to the script.
 
-This is done by adding key=value pairs after the -c argument like such:
+This is done by modifying the config file, or alternatively, adding key=value pairs after the -c argument like such:
 
 `python /path/to/script/bin.py my_config.yaml my_groupname --chain -c cores=18 assembler=megahit`
 
@@ -131,7 +132,7 @@ Minimum length for contig filtering and Metabat
 
 A higher threshold stabilizes tetranucleotide frequency and contig depth and improves binning quality.
 However, more data is excluded from the binning.
-There is no "best" setting here. MEGAHIT recommends an absolute minimum of 1500. For best results, try
+There is no "best" setting here. Metabat recommends an absolute minimum of 1500. For best results, try
 different settings from 1500 to 2500.
 
 `remove_duplicates=[true]`
@@ -207,6 +208,11 @@ Try the following steps:
 * Run Megahit instead of SPAdes (check the results on one sample first)
 * Choose option megahit_mink_1pass=true with Megahit.
 * Split your experiments and runs (splits assembly into more parts).
+
+__Snakemake raises ProtectedOutputException__
+
+You don't have write access to the relevant output. This prevents Snakemake
+from re-creating or updating the output. Make sure you have write access.
 
 __Samtools sort crashed with error code 137 and no helpful error message__
 

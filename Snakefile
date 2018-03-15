@@ -68,21 +68,21 @@ def filter_contigs_input(wildcards):
         return contigs_input(wildcards)
 
 # Discard small contigs and rename them to ensure unique names
+# NOTE: As of Snakemake v. 3.12, running the script directive in cluster mode
+# creates a temporary script copy in scripts directory, which necessitates
+# write permission. Hence, I call it from commandline instead.
 rule filter_contigs:
     input: filter_contigs_input
     output: protected('contigs/contigs.fna')
+    log: 'log/filter_contigs.log'
     threads: CORES
     params:
         walltime = 864000,
         ppn = 1,
         mem = '95gb',
-        min_contig_length = MIN_CONTIG_LENGTH
-    message:
-        '\n    input: {input}\n'
-        '    output: {output}\n'
-        '    minimum gene length: {params.min_contig_length}\n'
-        '    script: filtercontigs.py'
-    script: 'scripts/filtercontigs.py'    
+        min_contig_length = MIN_CONTIG_LENGTH,
+        scriptpath = srcdir('scripts/filtercontigs.py')
+    shell: 'python {params.scriptpath} {params.min_contig_length} {output} {input} 2> {log}'
 
 # BWA index contigs
 rule index_contigs:

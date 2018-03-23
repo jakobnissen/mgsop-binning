@@ -35,7 +35,7 @@ options.add_argument('-c', dest='config', nargs='+', metavar='k=v', default=[],
 options.add_argument('--commit', action='store_true',
     help='do not dry-run, execute snakefile')
 options.add_argument('--chain', action='store_true',
-    help='call dependent modules (binning/assembly)')
+    help='run module assembly before this module')
 
 # If no arguments, print help
 if len(sys.argv) == 1:

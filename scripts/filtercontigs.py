@@ -1,7 +1,7 @@
 # Renames contigs to unique names and removes contigs below minimum size.
 import sys
 
-min_contig_length, outputpath, *inputpaths = sys.argv[1:]
+min_contig_length, outputpath, inputpaths = sys.argv[1], sys.argv[2], sys.argv[3:]
 min_contig_length = int(min_contig_length)
 
 def iterfasta(filehandle):
@@ -24,9 +24,6 @@ def iterfasta(filehandle):
             buffer.append(line)
             
     yield header, ''.join(buffer)
-
-print(outputpath, inputpaths)
-sys.exit()
 
 with open(outputpath, 'w') as outfile:
     for filename in infilepaths:
